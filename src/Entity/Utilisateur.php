@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UtilisateurRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -40,6 +42,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $prenom = null;
 
+
     #[ORM\Column(length: 255)]
     private ?string $genre = null;
 
@@ -48,6 +51,20 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private bool $isVerified = false;
+
+    /**
+     * @var Collection<int, Revenu>
+     */
+    #[ORM\OneToMany(targetEntity: Revenu::class, mappedBy: 'utilisateur')]
+    private Collection $revenus;
+
+    #[ORM\ManyToOne(inversedBy: 'utilisateurs')]
+    private ?Statut $statut = null;
+
+    public function __construct()
+    {
+        $this->revenus = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -178,6 +195,48 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsVerified(bool $isVerified): static
     {
         $this->isVerified = $isVerified;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Revenu>
+     */
+    public function getRevenus(): Collection
+    {
+        return $this->revenus;
+    }
+
+    public function addRevenu(Revenu $revenu): static
+    {
+        if (!$this->revenus->contains($revenu)) {
+            $this->revenus->add($revenu);
+            $revenu->setUtilisateur($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRevenu(Revenu $revenu): static
+    {
+        if ($this->revenus->removeElement($revenu)) {
+            // set the owning side to null (unless already changed)
+            if ($revenu->getUtilisateur() === $this) {
+                $revenu->setUtilisateur(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getStatut(): ?Statut
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(?Statut $statut): static
+    {
+        $this->statut = $statut;
 
         return $this;
     }
